@@ -36,19 +36,19 @@
 //     } catch (error) {
 //       console.log(error);
 //     }
-    
+
 //   }
 
 
 
-  
 
-  
+
+
 
 //   const handleSave = (item) => {
 //     setWork({...work, ...item});
 //   };
-  
+
 //   return (
 //     <>
 //       <CssBaseline />
@@ -159,7 +159,7 @@
 //     setPage("summary");
 //   };
 //   const onSubmit = async () => {
-   
+
 //       console.log('work',work);
 //     try {
 //       const response = await PostData(work);
@@ -268,27 +268,33 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
   const [tableErrors, setTableErrors] = useState({});
   const [currentError, setCurrentError] = useState("");
   const [change, setChange] = useState(false)
+  const [permission, setPermission] = useState(false)
 
   const handleClose = () => {
     setPage("summary");
   };
 
-  const displayNextError = () => {
+  const displayNextError = (formError, tableError) => {
     // Display form errors one by one
-    const formErrorKeys = Object.keys(formErrors);
+    const formErrorKeys = Object.keys(formError);
     if (formErrorKeys.length > 0) {
-      setCurrentError({ type: 'form', key: formErrorKeys[0], message: formErrors[formErrorKeys[0]] });
+      setCurrentError({ type: 'form', key: formErrorKeys[0], message: formError[formErrorKeys[0]] });
       return;
     }
 
     // Display table errors one by one if form errors are resolved
-    const tableErrorKeys = Object.keys(tableErrors);
+    const tableErrorKeys = Object.keys(tableError);
     if (tableErrorKeys.length > 0) {
       const firstTableErrorKey = tableErrorKeys[0];
+      const firstTableError = tableError[firstTableErrorKey];
+      const firstFieldErrorKey = Object.keys(firstTableError)[0];
+      const firstFieldErrorMessage = firstTableError[firstFieldErrorKey];
+
       setCurrentError({
         type: 'table',
         key: firstTableErrorKey,
-        message: tableErrors[firstTableErrorKey],
+        field: firstFieldErrorKey,
+        message: firstFieldErrorMessage,
       });
       return;
     }
@@ -297,15 +303,14 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
     setCurrentError("");
   };
 
-  useEffect(()=>{
-   setChange(false)
 
-  },[formErrors,tableErrors])
 
-  const onSubmit = async () => {
-    if (Object.keys(formErrors).length > 0 || Object.keys(tableErrors).length > 0) {
+
+  const onSubmit = async (formError, tableError) => {
+    setPermission(false)
+    if (Object.keys(formError).length > 0 || Object.keys(tableError).length > 0) {
       // Show validation errors one by one
-      displayNextError();
+      displayNextError(formError, tableError);
       setChange(true)
       return;
     }
@@ -320,20 +325,14 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
     }
   };
 
-  const handleSave = (item,fError,tError) => {
-    console.log("item",item);
-    console.log("errorsf",fError);
-    console.log("errorsT",tError);
-    if(fError)
-    {
-      setFormErrors(fError);
-    }
-    if(tError)
-    {
-      setTableErrors(tError);
-    }
-    setWork({ ...work, ...item});
+  const handleSave = (item) => {
+    setChange(false)
+    setWork({ ...work, ...item });
   };
+
+  const handleSubmit = () => {
+    setPermission(true)
+  }
 
   return (
     <>
@@ -352,7 +351,7 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
         >
           <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: "0 0 auto" }}>
             <IconButton
-              onClick={onSubmit}
+              onClick={handleSubmit}
               aria-label="Save"
               sx={{ fontSize: "0.8rem", padding: "0.5rem" }}
             >
@@ -379,33 +378,32 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
           </Stack>
         </Box>
 
-        {/* Show error messages if there are any */}
         {currentError && change && (
           <Box sx={{ padding: "10px" }}>
             <Alert severity="error">
               {/* Display the error based on type */}
               {currentError.type === 'form' && (
                 <>
-                  Form Error: {currentError.key} - {currentError.message}
+                  {currentError.message}
                 </>
               )}
-              {currentError.type === 'table' && (
+              {currentError.type === 'table' && currentError.message && (
                 <>
-                  Table Error at Row {parseInt(currentError.key) + 1}: 
-                  {Object.keys(currentError.message).map((field, index) => (
-                    <div key={index}>{field} - {currentError.message[field]}</div>
-                  ))}
+                  Table Error at Row {parseInt(currentError.key) + 1}: {currentError.message}
                 </>
               )}
             </Alert>
           </Box>
         )}
 
+
+
+
         <div>
           {detailPageId === 0 && (
             <>
               <MDBCardBody>
-                <Form handleSave={handleSave} detailPageId={detailPageId} />
+                <Form handleSave={handleSave} detailPageId={detailPageId} permission={permission} setPermission={setPermission} onSubmit={onSubmit} />
               </MDBCardBody>
             </>
           )}
@@ -414,7 +412,7 @@ export default function Detail({ setPage, detailPageId, transactionId }) {
           {detailPageId === 1 && (
             <>
               <MDBCardBody>
-                <Form handleSave={handleSave} transactionId={transactionId} detailPageId={detailPageId} />
+                <Form handleSave={handleSave} transactionId={transactionId} detailPageId={detailPageId} permission={permission} setPermission={setPermission} onSubmit={onSubmit} />
               </MDBCardBody>
             </>
           )}

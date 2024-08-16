@@ -13,7 +13,7 @@ import Table1 from '../table/Table1';
 import Datepicker from '../input/Datepicker';
 import { Typography } from '@mui/material';
 
-export default function Form({ handleSave, transactionId, detailPageId}) {
+export default function Form({ handleSave, transactionId, detailPageId, permission, onSubmit }) {
 
     const [formData, setFormData] = useState({
         DocDate: '',
@@ -25,6 +25,8 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
 
     const [item, setItem] = useState([]);
     const [collect, setCollect] = useState();
+    const [third, setThird] = useState(false)
+    const [take, setTake] = useState([])
 
     const fetchData = async (selectedData) => {
         try {
@@ -93,27 +95,33 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
     }, [transactionId, detailPageId]);
 
     useEffect(() => {
-      
-        const formErrors = validateForm();
-          handleSave({
+        if (third) {
+            const formErrors = validateForm();
+            onSubmit(formErrors, take);
+            setThird(false)
+        }
+    }, [third, permission]);
+
+
+    useEffect(() => {
+
+        handleSave({
             iTransId: transactionId ? transactionId : 0,
             ...formData,
             UserId: 12345,
             Signature: "sign121617042162023.jpg",
-          },formErrors);
-        
-      }, [formData]);
+        },);
 
-    const accessData = (value1,tableError) => {
+    }, [formData]);
 
-        const formErrors = validateForm();
+    const accessData = (value1) => {
         handleSave({
             iTransId: collect ? collect : 0,
             ...formData,
             UserId: 12345,
             Signature: "sign121617042162023.jpg",
             body: value1.body,
-        },formErrors,tableError);
+        });
 
     };
 
@@ -123,34 +131,27 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
         return `${year}-${month}-${day}`;
     };
 
-   
-     // Validation function for the form
-  const validateForm = () => {
-    const errors = {};
 
-   
-    if (!formData.Project) errors.Project = "Project is required";
-    if (!formData.ProjectDes) errors.ProjectDes = "Project Description is required";
-    if (!formData.Location || /[^a-zA-Z\s]/.test(formData.Location)) {
-      errors.Location = "Location is required and should contain only letters";
+    // Validation function for the form
+    const validateForm = () => {
+        const errors = {};
+
+
+        if (!formData.Project) errors.Project = "Project is required";
+        if (!formData.ProjectDes) errors.ProjectDes = "Project Description is required";
+        if (!formData.Location || /[^a-zA-Z\s]/.test(formData.Location)) {
+            errors.Location = "Location is required and should contain only letters";
+        }
+        if (!formData.DocDate) errors.DocDate = "Document Date is required";
+
+        return errors;
+    };
+
+    const fetchDetails = (item1) => {
+        setTake(item1)
     }
-    if (!formData.DocDate) errors.DocDate = "Document Date is required";
-
-    return errors;
-  };
 
 
-  // Use this function to pass validation status back to the Detail component
-//   const handleValidate = () => {
-//     const formErrors = validateForm();
-//     handleSave(formErrors, "form");
-//   };
-
-  // Validate form whenever formData is changed
-//   useEffect(() => {
-//     handleValidate();
-//   }, [formData]);
-    
 
     return (
         <Card>
@@ -167,14 +168,14 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
                                 { value: 2, label: 'Project2' },
                                 { value: 3, label: 'Project3' },
                             ]}
-                            error={Boolean(validateForm().Project)} 
-                            // helperText={validateForm().Project} 
+                            error={Boolean(validateForm().Project)}
+                        // helperText={validateForm().Project} 
                         />
 
                         <MDBCol lg="3" md="4" sm="6" xs="12">
-                            <Input1 label='Project Details' value={formData.ProjectDes}   
-                            error={Boolean(validateForm().ProjectDes)}
-                            helperText={validateForm().ProjectDes}
+                            <Input1 label='Project Details' value={formData.ProjectDes}
+                                error={Boolean(validateForm().ProjectDes)}
+                                helperText={validateForm().ProjectDes}
                             />
 
                         </MDBCol>
@@ -182,11 +183,11 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
                     <MDBRow style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
                         <MDBCol lg="3" md="4" sm="6" xs="12">
                             <Input1 label='Location' type='text'
-                            value={formData.Location}
-                                 onChange={handleLocationChange}
-                                 error={Boolean(validateForm().Location)}
-                                 helperText={validateForm().Location}
-                                 />
+                                value={formData.Location}
+                                onChange={handleLocationChange}
+                                error={Boolean(validateForm().Location)}
+                                helperText={validateForm().Location}
+                            />
 
                         </MDBCol>
                         <MDBCol style={{ marginTop: '15px' }} lg="3" md="4" sm="6" xs="12">
@@ -195,17 +196,17 @@ export default function Form({ handleSave, transactionId, detailPageId}) {
                                 onChange={handleDateChange}
                                 label={"Select Date"}
                                 error={Boolean(validateForm().DocDate)}
-                                 helperText={validateForm().DocDate}
+                                helperText={validateForm().DocDate}
                             />
                         </MDBCol>
                     </MDBRow>
                 </Box>
                 <Box>
-                    <Table1 accessData={accessData} item={item} detailPageId={detailPageId}  />
+                    <Table1 accessData={accessData} item={item} detailPageId={detailPageId} permission={permission} fetchDetails={fetchDetails} setThird={setThird} />
                 </Box>
             </CardContent>
         </Card>
-        
+
     );
 }
 

@@ -17,8 +17,8 @@ import AutoComplete3 from '../AutoComplete/AutoComplete3';
 
 
 
-export default function Table1({ accessData, item, detailPageId, }) {
-
+export default function Table1({ accessData, item, detailPageId,permission,fetchDetails,setThird }) {
+    
     const cellStyle = {
         padding: "0px",
         paddingLeft: "4px",
@@ -54,6 +54,7 @@ export default function Table1({ accessData, item, detailPageId, }) {
 
     const [value, setValue] = useState([]);
     const [formData, setFormData] = useState([]);
+    
 
     const convertDateFormat = (dateStr) => {
         const [day, month, year] = dateStr.split('-');
@@ -62,9 +63,10 @@ export default function Table1({ accessData, item, detailPageId, }) {
 
     useEffect(() => {
         if (detailPageId === 1 && item) {
+            console.log('item',item);
             setRows(item.map((it, index) => ({
                 Observation: it.sObservation || '',
-                RiskLevel: it.iRiskLevel || '',
+                RiskLevelName: it.iRiskLevel || '',
                 ActionReq: it.sActionReq || '',
                 ActionBy: it.iActionBy || '',
                 ActionByName: it.sActionBy || '',
@@ -123,25 +125,24 @@ export default function Table1({ accessData, item, detailPageId, }) {
     return errors;
   };
 
-  // Use this function to pass validation status back to the Detail component
-//   const handleValidate = () => {
-//     const tableErrors = validateTable();
-//     accessData(tableErrors, "table");
-//   };
-
-  // Validate table whenever rows are changed
-//   useEffect(() => {
-//     handleValidate();
-//   }, [rows]);
+  useEffect(() =>{
+        if(permission){
+                const tableErrors = validateTable();
+                setThird(true);
+                fetchDetails(tableErrors);
+            } 
+  },[ permission])
+            
+   
 
     useEffect(() => {
             const filteredRows = rows.filter(row =>
                 row.Observation !== '' || row.RiskLevel !== '' || row.ActionReq !== '' || row.ActionBy !== '' || row.EmployeeCode !== '' || row.TargetDate !== ''
             );
-            const tableErrors = validateTable();
+            
             accessData({
                 body: filteredRows,
-            },tableErrors);
+            });
         
     }, [rows]);
 
@@ -158,8 +159,6 @@ export default function Table1({ accessData, item, detailPageId, }) {
         };
         employeeData();
     }, []);
-
-    console.log('rows',rows);
 
     return (
         <>
